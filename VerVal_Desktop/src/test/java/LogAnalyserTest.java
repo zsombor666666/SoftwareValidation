@@ -12,9 +12,9 @@ public class LogAnalyserTest {
     @Before
     public void setUp() {
         fileExtManager = new FileExtManagerStub();
-        loganalyser = new TestableLogAnalyser(fileExtManager);
         FileExtManagerFactory.getInstance().setFileExtManager(fileExtManager);
         webService = new ManualWebService();
+        loganalyser = new TestableLogAnalyser(fileExtManager);     
     }
 
     @After
@@ -51,6 +51,7 @@ public class LogAnalyserTest {
 
     @Test
     public void isValiedLogFileName_FileNameTooShort_CallsWebService() {
+    	loganalyser.setWebService(webService);
         loganalyser.isTheFileValid("FO");
         Assert.assertEquals("should be too short", 
         		webService.getLastError(), "FO too short");
@@ -61,7 +62,7 @@ public class LogAnalyserTest {
         WebService mockedWebService = Mockito.mock(WebService.class);
         loganalyser.setWebService(mockedWebService);
         loganalyser.isTheFileValid("FO");
-        Mockito.verify(mockedWebService, Mockito.times(2)).logError("FO too short");
+        Mockito.verify(mockedWebService, Mockito.times(1)).logError("FO too short");
     } 
     
 }
