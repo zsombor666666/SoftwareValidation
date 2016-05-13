@@ -1,68 +1,67 @@
-import static org.junit.Assert.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.mockito.Mockito; 
 
 public class LogAnalyserTest {
 
-	private LogAnalyser testableLogAnalyser;
-	private FileExtentionManagerInterface fexm;
+	private static final String validLogFileName = "Foo.slr";
+    private static final String invalidLogFileName = "Bar.slrr";
+    private LogAnalyser loganalyser;
+    private FileExtManagerStub fileExtManager;
+    private WebService webService; 
 	
-//	@Parameterized.Parameters 
-//	public static Collection<Object[]> data() {
-//	return Arrays.asList(new Object[][] {
-//			{"abc.str", true}, {"abc.str1", false},  {"abc.str2", false}
-//	});
-//	
-//	}		
-//	@Parameterized.Parameter
-//	public String fInput;
-//	
-//	@Parameterized.Parameter(value = 1)
-//	public boolean fExpected; 
-//	
-	
-	
-	@Before
-	public void setUp() throws Exception {
-		fexm= new FakeFileExtentionManager();
-		fexm.setReturnValue(true);
-		//logAnalyser = new LogAnalyser();
-		testableLogAnalyser = new TestableLogAnalyser(fexm);
-		//FileExtentionManagerFactory.getInstance().setFileExtMgr(fexm);
-			
-	}
-	
-	@After
-	public void tearDown() throws Exception {
-		// nothing to do
-	}
-	
-//	@Test(expected= IllegalArgumentException.class)
-//	public void isValidLogFileNameToShortExceptionThrown() throws Exception{
-//		String validLogFileName ="something.str";
-//		String inValidLogFileName ="something.strr";
-//		
-//		logAnalyser.isValidLogFileName("");
-//	}
-	
-	@Test
-	public void isValidLogFileNameTestable_Valid_ReturnsTrue() throws Exception{
-		
-		fexm.setReturnValue(true);
-		assertEquals("should be valid", testableLogAnalyser.isValidLogFileName(""), true);
-	}
-	
-	@Test
-	public void isValidLogFileNameTestable_NotValid_ReturnsFalse() throws Exception{
-		
-		fexm.setReturnValue(false);
-		assertEquals("should be invalid", testableLogAnalyser.isValidLogFileName(""), false);
-	}
-	
-//	@Test
-//	public void isValidLogFileNameReturnsTrue() throws Exception{
-//		assertEquals(fExpected,logAnalyser.isValidLogFileName(fInput));
-//	} 
-	
+    @Before
+    public void setUp() {
+        fileExtManager = new FileExtManagerStub();
+        loganalyser = new TestableLogAnalyser(fileExtManager);
+        FileExtManagerFactory.getInstance().setFileExtManager(fileExtManager);
+        webService = new ManualWebService();
+    }
+
+    @After
+    public void tearDown() {}
+
+    @Test
+    public void isValidLogFileName_ValidLogFileName_ReturnsTrue() {
+        fileExtManager.setReturnValue(true);
+        Assert.assertEquals(validLogFileName + " should be valid",
+                loganalyser.isTheFileValid(validLogFileName), true);
+    }
+
+    @Test
+    public void isValidLogFileName_InvalidLogFileName_ReturnsFalse() {
+    	fileExtManager.setReturnValue(false);
+        Assert.assertEquals(invalidLogFileName + " should be invalid",
+                loganalyser.isTheFileValid(invalidLogFileName), false);
+
+    }
+
+    @Test
+    public void IsValidLogFileNameTestable_NotValid_ReturnFalse() {
+        fileExtManager.setReturnValue(false);
+        Assert.assertEquals("should be invalid", 
+        		loganalyser.isTheFileValid(""), false);
+    }
+
+    @Test
+    public void IsValidLogFileNameTestable_Valid_ReturnTrue() {
+    	fileExtManager.setReturnValue(true);
+        Assert.assertEquals("should be valid", 
+        		loganalyser.isTheFileValid(""), true);
+    }
+
+    @Test
+    public void isValiedLogFileName_FileNameTooShort_CallsWebService() {
+        loganalyser.isTheFileValid("FO");
+        Assert.assertEquals("should be too short", 
+        		webService.getLastError(), "FO too short");
+    }
+
+    @Test
+    public void isValiedLogFileNameMock_FileNameTooShort_CallsWebService() {
+        WebService mockedWebService = Mockito.mock(WebService.class);
+        loganalyser.setWebService(mockedWebService);
+        loganalyser.isTheFileValid("FO");
+        Mockito.verify(mockedWebService, Mockito.times(2)).logError("FO too short");
+    } 
+    
 }
